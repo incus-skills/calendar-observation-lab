@@ -60,6 +60,8 @@ The non-nutation variant produces a common longitude displacement for Sun and Mo
 
 The derived phase residual is unchanged to the reported precision. This is consistent with a largely common rotation of the longitude origin: subtracting the two longitudes cancels that shared displacement.
 
+The epoch-dependent displacement is consistent with the expected time-varying nutation contribution to the frame orientation, rather than a constant longitude bias. The four-epoch pattern supports interpreting this as a frame-convention effect. It is not, by itself, a complete decomposition of the nutation series or proof that nutation is the sole contributor.
+
 The default frame is therefore the substantially closer match to this Horizons quantity-31 convention at all four sampled epochs. The experiment supports that comparative conclusion; it does not independently prove every detail of the underlying frame model.
 
 ## 4. Implementation and ephemeris provenance
@@ -80,7 +82,9 @@ The comparison runtime downloaded and retained:
 
 The `skyfield_data` package also contains `de421.bsp` (SHA-256 `a20a7139da04cbc462454634918e9a9ca69127044e2cc9d4f9c16e238d2deedc`). The runtime download/cache activity identifies DE440 as the file loaded during the comparison; the packaged DE421 is recorded as an available dependency resource, not conflated with the runtime-loaded DE440.
 
-Horizons used DE441. Thus the comparison is independent in implementation and reference pipeline, but does not use identical ephemeris data. This remains a provenance difference, not a demonstrated cause of the small residuals.
+Horizons used DE441. Thus the comparison is independent in implementation and reference pipeline, but does not use identical ephemeris data.
+
+The observed 0.04–0.05 arcsecond maximum residuals are plausibly at the scale expected from differences between the DE440 and DE441 solutions and the remaining pipeline/frame details. They should not be treated as a precision target to tighten or as evidence of a defect merely because they are non-zero. However, this experiment did not isolate the DE440/DE441 contribution by repeating the comparison with matched ephemeris data and harmonised conventions. Accordingly, the residual level is an observed comparison floor for this setup, not a proven irreducible floor attributable solely to the ephemeris-version difference.
 
 ## 5. Sufficiency judgement
 
@@ -104,6 +108,7 @@ This result does not establish:
 - Universal accuracy across arbitrary dates, bodies, epochs or ephemeris versions.
 - Topocentric or observer-location-dependent correctness. ORB-1 is deliberately geocentric.
 - The intended interpretation of “relative to a location” in the frozen Calendar specification.
+- End-to-end validation of the Calendar engine's time-zone/time-scale conversion. The comparison supplied the same nominal UTC/UT epoch directly to the reference and calculation paths; it did not exercise the engine's datetime normalisation path.
 - A normative precision requirement for Calendar.
 - Correctness of the current `calendar-engine` integration, including its duplicate/shadowing `observe()` method and time-scale ambiguity.
 
