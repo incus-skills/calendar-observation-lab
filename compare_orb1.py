@@ -19,7 +19,7 @@ def parse_row(path):
 def angle_diff(a,b): return (a-b+180.0)%360.0-180.0
 def ephemeris_inventory():
     """Find the actual BSP supplied by skyfield-data as well as cached BSPs."""
-    roots=[("user_cache",Path.home()/".cache")]
+    roots=[("user_cache",Path.home()/".cache"),("skyfield_default_data_dir",Path.home()/".skyfield")]
     try:
         import skyfield_data
         roots.append(("skyfield_data_package",Path(skyfield_data.__file__).resolve().parent))
@@ -62,7 +62,7 @@ def main():
     epochs=[compare_one(p) for p in manifests]
     report={"baseline_id":"ORB-1","reference_source":"JPL Horizons quantity 31; raw responses and request metadata retained",
       "implementation":{"package":"libephemeris","version":importlib.metadata.version("libephemeris"),"calculation_mode":mode,
-        "backend_policy":"Skyfield forced explicitly; Horizons backend not selected","ephemeris_files_found_in_cache":ephemeris_inventory()},
+        "backend_policy":"Skyfield forced explicitly; Horizons backend not selected","ephemeris_files_discovered":ephemeris_inventory()},
       "epochs":epochs,"interpretation":{"status":"diagnostic_only","tolerance_deg":None,"note":"No numerical acceptance threshold is imposed. This bounded sample tests frame behaviour across epochs, not universal accuracy; Horizons and Skyfield may use different JPL ephemerides."}}
     OUT.mkdir(parents=True,exist_ok=True); dest=OUT/"ORB-1-comparison.json"; dest.write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
     print(f"Comparison written: {dest}\nlibephemeris {report['implementation']['version']} / {mode}")
