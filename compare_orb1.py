@@ -18,15 +18,26 @@ def parse_row(path):
     return vals[0],vals[1]
 def angle_diff(a,b): return (a-b+180.0)%360.0-180.0
 def ephemeris_inventory():
-    root=Path.home()/".cache"; found=[]
-    if root.exists():
+    """Find the actual BSP supplied by skyfield-data as well as cached BSPs."""
+    roots=[("user_cache",Path.home()/".cache")]
+    try:
+        import skyfield_data
+        roots.append(("skyfield_data_package",Path(skyfield_data.__file__).resolve().parent))
+    except ImportError:
+        pass
+    found={}
+    for source,root in roots:
+        if not root.exists(): continue
         for path in root.rglob("de*.bsp"):
-            if path.is_file():
-                h=hashlib.sha256()
-                with path.open("rb") as f:
-                    for chunk in iter(lambda:f.read(1024*1024),b""): h.update(chunk)
-                found.append({"path":str(path),"filename":path.name,"size_bytes":path.stat().st_size,"sha256":h.hexdigest()})
-    return sorted(found,key=lambda x:x["path"])
+            if not path.is_file(): continue
+            resolved=path.resolve()
+            if str(resolved) in found: continue
+            digest=hashlib.sha256()
+            with resolved.open("rb") as stream:
+                for chunk in iter(lambda:stream.read(1024*1024),b""): digest.update(chunk)
+            found[str(resolved)]={"path":str(resolved),"source":source,"filename":resolved.name,
+                "size_bytes":resolved.stat().st_size,"sha256":digest.hexdigest()}
+    return sorted(found.values(),key=lambda item:item["path"])
 def compare_one(manifest_path):
     m=json.loads(manifest_path.read_text(encoding="utf-8")); stamp=m["epoch"]; dt=datetime.strptime(stamp,"%Y-%m-%d %H:%M:%S")
     jd=float(eph.julday(dt.year,dt.month,dt.day,dt.hour+dt.minute/60+dt.second/3600))
