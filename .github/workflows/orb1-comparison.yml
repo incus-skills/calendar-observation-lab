@@ -43,14 +43,14 @@ jobs:
             --epoch '2026-11-03 12:00:00'
       - name: Compare libephemeris Skyfield frame variants
         run: python compare_orb1.py
-      - name: Record bundled Skyfield JPL ephemeris
+      - name: Record discovered JPL ephemeris files
         if: always()
         run: |
           python - <<'PY'
           import hashlib
           from pathlib import Path
           import skyfield_data
-          roots = [Path.home() / '.skyfield', Path.home() / '.cache',
+          roots = [Path.home(), Path.cwd(), Path('/tmp'),
                    Path(skyfield_data.__file__).resolve().parent]
           out = Path('environment/jpl-ephemeris-inventory.txt')
           files = sorted({p.resolve() for root in roots if root.exists()
