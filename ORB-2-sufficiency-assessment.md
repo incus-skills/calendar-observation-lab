@@ -2,16 +2,20 @@
 
 ## Status
 
-OBSERVATION COMPLETE — runtime verification pending.
+CLOSED — bounded observation and library-level runtime verification complete.
 
-The source inspection and controlled conversion probe are complete.
-Final closure of the runtime verification objective is conditional on
-the CI assertion passing against the installed libephemeris runtime.
+The source inspection, controlled conversion probe, and isolated
+`libephemeris.eph.julday()` runtime assertion are complete for the
+defined objective. This closure does not resolve the Calendar engine's
+datetime semantics or validate its end-to-end datetime-to-Julian-date
+path.
 
 ## Scope
 
 Bounded observation of the effective `observe()` implementation in
-`calendar_engine.py` at commit `5d30daed`.
+`calendar_engine.py` at commit `5d30daed`, plus direct runtime
+verification of the installed `libephemeris.eph.julday()` function
+against one known epoch.
 
 ## Findings
 
@@ -34,7 +38,9 @@ The expected Julian date for 2026-11-03 12:00:00 UTC is JD 2461348.0.
 - 05:00 -07:00 → JD 2461347.708333 (7 hours early)
 - 12:00:00.5 UTC → JD 2461348.000000 (0.5 seconds discarded)
 
-These values come from the bounded controlled conversion probe, not from execution of the Calendar engine against the actual libephemeris runtime.
+These values come from the bounded controlled conversion probe, not
+from execution of the Calendar engine against the actual libephemeris
+runtime.
 
 ### Data-integrity finding
 
@@ -68,18 +74,28 @@ The intended time semantics remain unresolved. The presence of the
 UTC-normalising implementation is evidence of intent, not proof that
 it was the intended specification.
 
-### Not yet runtime-verified
+### Runtime verification completed
 
-The actual `libephemeris.eph.julday()` runtime has not yet been
-exercised. Closure path: execute the assertion in `verify_julday.py`
-through CI and record the resulting run evidence.
+The isolated assertion in `verify_julday.py` was executed successfully
+in GitHub Actions on both Python 3.12 and Python 3.13.
+
+- Installed `libephemeris`: 3.2.2
+- Epoch: 2026-11-03 12:00:00
+- Expected Julian date: 2461348.0
+- Observed assertion result: PASS on both matrix jobs
+- Workflow run: [Calendar Engine Test #6](https://github.com/incus-skills/calendar-engine/actions/runs/41737699690)
+
+The assertion exercises the actual installed library runtime. It is a
+library-level check only; it does not execute the Calendar engine's
+`observe()` method or establish that the engine supplies the correct
+epoch to `julday()`.
 
 ## Classification
 
 - Confirmed by source: effective method ignores timezone offsets and microseconds.
-- Confirmed by probe: quantified consequences above.
-- Not yet runtime-verified: actual libephemeris integration.
-- Still unresolved: intended time semantics.
+- Confirmed by controlled probe: quantified consequences above.
+- Runtime-verified: installed `libephemeris.eph.julday()` returns the expected JD for the tested epoch in both CI Python versions.
+- Still unresolved: intended time semantics and end-to-end Calendar engine datetime handling.
 
 ## What the runtime assertion establishes
 
@@ -96,6 +112,10 @@ correction is proposed at this stage.
 
 ## Provenance
 
-- Repository: `calendar-engine` at `5d30daed`
-- File: `calendar_engine.py`
-- Blob: `e8dc98abf2752f5a426380c149b2d0a144218a52`
+- Calendar engine observation target commit: `5d30daed6379f1e9861d35c487cac41f34ea0483`
+- Source file: `calendar_engine.py`
+- Source blob: `e8dc98abf2752f5a426380c149b2d0a144218a52`
+- Runtime verifier commit: [`3f691a4`](https://github.com/incus-skills/calendar-engine/commit/3f691a4a36df930b9a24f45748590d8ff8823fb8)
+- CI workflow commit: [`ed83c10`](https://github.com/incus-skills/calendar-engine/commit/ed83c10d3506344a538dbf84cfd2fbb0966a907e)
+- CI run: [41737699690](https://github.com/incus-skills/calendar-engine/actions/runs/41737699690)
+- Observation lab assessment commit: pending this update
