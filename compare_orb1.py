@@ -19,7 +19,7 @@ def parse_row(path):
 def angle_diff(a,b): return (a-b+180.0)%360.0-180.0
 def ephemeris_inventory():
     """Find the actual BSP supplied by skyfield-data as well as cached BSPs."""
-    roots=[("user_cache",Path.home()/".cache"),("skyfield_default_data_dir",Path.home()/".skyfield")]
+    roots=[("runner_home",Path.home()),("working_directory",Path.cwd()),("temporary_directory",Path("/tmp"))]
     try:
         import skyfield_data
         roots.append(("skyfield_data_package",Path(skyfield_data.__file__).resolve().parent))
