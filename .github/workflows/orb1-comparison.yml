@@ -43,12 +43,25 @@ jobs:
             --epoch '2026-11-03 12:00:00'
       - name: Compare libephemeris Skyfield frame variants
         run: python compare_orb1.py
-      - name: Record cached JPL ephemeris inventory
+      - name: Record bundled Skyfield JPL ephemeris
         if: always()
         run: |
-          mkdir -p environment
-          find "$HOME/.cache" -type f -name 'de*.bsp' -printf '%p\t%s bytes\n' 2>/dev/null | sort | tee environment/jpl-ephemeris-files.txt || true
-          find "$HOME/.cache" -type f -name 'de*.bsp' -print0 2>/dev/null | sort -z | xargs -0 -r sha256sum | tee environment/jpl-ephemeris-sha256.txt
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          import skyfield_data
+          root = Path(skyfield_data.__file__).resolve().parent
+          out = Path('environment/jpl-ephemeris-inventory.txt')
+          files = sorted(root.rglob('de*.bsp'))
+          with out.open('w', encoding='utf-8') as report:
+              for path in files:
+                  digest = hashlib.sha256()
+                  with path.open('rb') as stream:
+                      for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                          digest.update(chunk)
+                  report.write(f'{path}\\t{path.stat().st_size} bytes\\tsha256={digest.hexdigest()}\\n')
+          print(out.read_text(encoding='utf-8'), end='')
+          PY
       - name: Upload ORB-1 evidence
         if: always()
         uses: actions/upload-artifact@v4
