@@ -1,0 +1,3 @@
+# Pin the calculation library used by the ORB-1 comparison.
+# Its declared dependencies install Skyfield and the supporting astronomy stack.
+libephemeris==3.2.2
