@@ -50,9 +50,11 @@ jobs:
           import hashlib
           from pathlib import Path
           import skyfield_data
-          root = Path(skyfield_data.__file__).resolve().parent
+          roots = [Path.home() / '.skyfield', Path.home() / '.cache',
+                   Path(skyfield_data.__file__).resolve().parent]
           out = Path('environment/jpl-ephemeris-inventory.txt')
-          files = sorted(root.rglob('de*.bsp'))
+          files = sorted({p.resolve() for root in roots if root.exists()
+                          for p in root.rglob('de*.bsp') if p.is_file()})
           with out.open('w', encoding='utf-8') as report:
               for path in files:
                   digest = hashlib.sha256()
