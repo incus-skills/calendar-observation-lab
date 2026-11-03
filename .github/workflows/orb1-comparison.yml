@@ -1,4 +1,4 @@
-name: ORB-1 reference comparison
+name: ORB-1 bounded reference comparison
 
 on:
   push:
@@ -13,45 +13,47 @@ concurrency:
 
 jobs:
   orb1-comparison:
-    name: Capture Horizons and compare Skyfield
+    name: Capture discriminating Horizons epochs and compare Skyfield
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
+    timeout-minutes: 20
     steps:
       - name: Check out observation lab
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
           cache: pip
           cache-dependency-path: requirements-ci.txt
-
       - name: Install pinned calculation dependency
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements-ci.txt
-
       - name: Record execution environment
         run: |
           mkdir -p environment
           python --version | tee environment/python-version.txt
           python -m pip freeze | tee environment/pip-freeze.txt
-
-      - name: Capture ORB-1 Horizons reference
+      - name: Capture four ORB-1 epochs from Horizons
         run: |
           python capture_horizons_reference.py \
-            --epoch "2026-11-03 12:00:00"
-
-      - name: Compare libephemeris Skyfield variants
+            --epoch '2026-02-03 12:00:00' \
+            --epoch '2026-05-03 12:00:00' \
+            --epoch '2026-08-03 12:00:00' \
+            --epoch '2026-11-03 12:00:00'
+      - name: Compare libephemeris Skyfield frame variants
         run: python compare_orb1.py
-
+      - name: Record cached JPL ephemeris inventory
+        if: always()
+        run: |
+          mkdir -p environment
+          find "$HOME/.cache" -type f -name 'de*.bsp' -printf '%p\t%s bytes\n' 2>/dev/null | sort | tee environment/jpl-ephemeris-files.txt || true
+          find "$HOME/.cache" -type f -name 'de*.bsp' -print0 2>/dev/null | sort -z | xargs -0 -r sha256sum | tee environment/jpl-ephemeris-sha256.txt
       - name: Upload ORB-1 evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: orb1-evidence-${{ github.run_number }}
+          name: orb1-bounded-evidence-${{ github.run_number }}
           path: |
             reference-data/horizons/
             results/
